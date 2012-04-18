@@ -72,7 +72,7 @@ public class Server extends UntypedActor {
   public void onReceive(Object nachricht) {
     if (nachricht instanceof NeuerClient) {
       NeuerClient nc = (NeuerClient) nachricht;
-      clients.add(nc);
+      clients.add(nc.client);
       // 2x damit Client immer was zu tun hat ,-)
       nc.tell(neueArbeit());
       nc.tell(neueArbeit());
@@ -94,6 +94,13 @@ public class Server extends UntypedActor {
     ActorRef server = system.actorOf(new Props(Server.class), "server");
     ActorRef client1 = system.actorOf(new Props(Client.class), "client");
     server.tell(new NeuerClient(client1)); 
+  }
+}
+
+public class NeuerClient {
+  private final ActorRef client;
+  public NeuerClient(ActorRef client) {
+    this.client = client;
   }
 }
 
