@@ -1,7 +1,27 @@
-@(message: String)
+@(result: PiApprox)(implicit request: RequestHeader)
 
-@main("Welcome to Play 2.0") {
-    
-    @play20.welcome(message)
-    
+@main("Akka-Pi Play Webclient") {
+   <h1>Vorläufiges Ergebnis</h1>
+   <table>
+     <tr>
+       <td>Anzahl Glieder (in der Reihe)</td>
+       <td class="n">@result.n</td>
+     </tr>
+   </table>
+   <h2>Approximation</h2>
+   <p class="pi" style="width: 720px;">@result.approx</p>
+   <script type="text/javascript" charset="utf-8">
+        $(function() {
+	    var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
+	    var chatSocket = new WS("@routes.Application.result.webSocketURL()");
+
+	    var receiveEvent = function (event) {
+		var data = JSON.parse(event.data);
+		$(".n").text(data.n);
+		$(".pi").text(data.pi);
+	    };
+	    
+	    chatSocket.onmessage = receiveEvent
+	});
+   </script>
 }
