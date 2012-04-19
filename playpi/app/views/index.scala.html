@@ -8,8 +8,9 @@
        <td class="n">@result.n</td>
      </tr>
    </table>
-   <h2>Approximation</h2>
-   <p class="pi" style="width: 720px;">@result.approx</p>
+   <h2>Pi-Approximation</h2>
+   <style>p { margin: 0; }</style>
+   <div class="pi" style="font-family: monospace; font-size: 1.48em;">@result.approx</div>
    <script type="text/javascript" charset="utf-8">
         $(function() {
 	    var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
@@ -18,7 +19,12 @@
 	    var receiveEvent = function (event) {
 		var data = JSON.parse(event.data);
 		$(".n").text(data.n);
-		$(".pi").text(data.pi);
+		var dotPi = $(".pi");
+		dotPi.html("");
+		var ps = data.pi.map(function (piPart) {
+		    var p = $('<p></p>').text(piPart);
+		    dotPi.append(p);
+		});
 	    };
 	    
 	    chatSocket.onmessage = receiveEvent

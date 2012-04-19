@@ -15,21 +15,25 @@ import akka.util.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class Client extends UntypedActor {
-  private static int genauigkeit(long n) {
-    return 256;
+  protected final int genauigkeit;
+
+  public Client(int genauigkeit) {
+    this.genauigkeit = genauigkeit;
   }
 
   // Brauchen wir für die Kalkulation:
   private static final BigDecimal vier = new BigDecimal(4);
+  private static final BigDecimal eins = new BigDecimal(1);
+  private static final BigDecimal minusEins = eins.negate();
 
-  private BigDecimal kalkuliereApproximationsTeil(long von, long bis) {
+  protected BigDecimal kalkuliereApproximationsTeil(long von, long bis) {
     BigDecimal summe = new BigDecimal(0);
     for (long i = von; i < bis; i += 1) {
       // zaehler = (1 - (i % 2) * 2)
-      BigDecimal zaehler = new BigDecimal(1 - (i % 2) * 2);
+      BigDecimal zaehler = (i % 2 == 0) ? eins : minusEins;//new BigDecimal(1 - (i % 2) * 2);
       // nenner = 2 * i + 1
       BigDecimal nenner = new BigDecimal(2 * i + 1);
-      BigDecimal ergebnis = zaehler.divide(nenner, genauigkeit(i), RoundingMode.HALF_UP);
+      BigDecimal ergebnis = zaehler.divide(nenner, genauigkeit, RoundingMode.HALF_UP);
 	summe = summe.add(ergebnis);
     }
     return summe.multiply(vier);
