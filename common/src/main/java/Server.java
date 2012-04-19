@@ -39,7 +39,7 @@ public class Server extends UntypedActor {
   }
 
   public void neuesErgebnis() {
-    System.out.println("Neue approx! [..]");
+    System.out.println("Neue approx., anzahlNummern = " + anzahlNummern);
     PiApproximationsTeil piGesamt = new PiApproximationsTeil(0, anzahlNummern, pi);
     //for(ActorRef aktor: benachrichtigen) {
     benachrichtigen.tell(piGesamt);

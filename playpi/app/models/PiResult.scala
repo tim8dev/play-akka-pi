@@ -22,9 +22,9 @@ case class PiApprox(approx: BigDecimal, n: Long)
 class PiResultListener extends Actor {
   val pushTo: PushEnumerator[JsValue] = Enumerator.imperative[JsValue]()
   val server: ActorRef =
-    context.actorOf(Props(new Server(128, self)), name = "server")
+    context.actorOf(Props(new Server(123456, self)), name = "server")
   val dummyClient1: ActorRef = context.actorOf(Props[Client], name = "dummy1")
-  val dummyClient2: ActorRef = context.actorOf(Props[Client], name = "dummy2")
+  //val dummyClient2: ActorRef = context.actorOf(Props[Client], name = "dummy2")
 
   var curResult: PiApprox = PiApprox(3.14159, 1)
 
@@ -33,7 +33,7 @@ class PiResultListener extends Actor {
       sender ! pushTo
       self ! curResult
       server ! new NeuerArbeiter(dummyClient1)
-      server ! new NeuerArbeiter(dummyClient2)
+      //server ! new NeuerArbeiter(dummyClient2)
     case approx @ PiApprox(pi, n) =>
       curResult = approx
       val msg = JsObject(

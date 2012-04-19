@@ -16,31 +16,28 @@ import java.util.concurrent.TimeUnit;
 
 public class Client extends UntypedActor {
   private static int genauigkeit(long n) {
-    return (int) Math.max(100, 100); //(n + 10));
+    return 256;
   }
 
-  // Brauchen wir für Kalkulation:
-  private static final BigDecimal eins = new BigDecimal(1);
-  private static final BigDecimal zwei = new BigDecimal(2);
+  // Brauchen wir für die Kalkulation:
   private static final BigDecimal vier = new BigDecimal(4);
 
   private BigDecimal kalkuliereApproximationsTeil(long von, long bis) {
     BigDecimal summe = new BigDecimal(0);
     for (long i = von; i < bis; i += 1) {
       // zaehler = (1 - (i % 2) * 2)
-      BigDecimal zaehler = new BigDecimal((1 - (i % 2) * 2) * 4);
+      BigDecimal zaehler = new BigDecimal(1 - (i % 2) * 2);
       // nenner = 2 * i + 1
       BigDecimal nenner = new BigDecimal(2 * i + 1);
       BigDecimal ergebnis = zaehler.divide(nenner, genauigkeit(i), RoundingMode.HALF_UP);
 	summe = summe.add(ergebnis);
     }
-    return summe;
+    return summe.multiply(vier);
   }
 
   public void onReceive(Object nachricht) {
     if (nachricht instanceof Arbeit) {
       Arbeit arbeit = (Arbeit) nachricht;
-      System.out.println("Ich hab Arbeit: " + arbeit);
       BigDecimal ergebnis = kalkuliereApproximationsTeil(arbeit.von, arbeit.bis);
       getSender().tell(new PiApproximationsTeil(arbeit.von, arbeit.bis, ergebnis), getSelf());
     } else {
