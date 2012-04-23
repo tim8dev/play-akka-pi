@@ -21,25 +21,21 @@ import akkapi.common._
 case class PiApprox(approx: BigDecimal, n: Long)
 
 class PiResultListener extends Actor {
-  val i = 80000
-  val genauigkeit = 100
+  val i = 128
+  val genauigkeit = 1000
 
   val pushTo: PushEnumerator[JsValue] = Enumerator.imperative[JsValue]()
-  val server: ActorRef =
-    context.actorOf(Props(new Server(i, self)), name = "server")
+  val server: ActorRef = context.system.actorOf(Props(new Server(i, genauigkeit, self)), name = "server")
   //val fastClient: ActorRef = context.actorOf(Props(new FastClient(genauigkeit)), name = "fast")
-  val slowClient1: ActorRef = context.actorOf(Props(new Client(genauigkeit)), name = "slow1")
-  val slowClient2: ActorRef = context.actorOf(Props(new Client(genauigkeit)), name = "slow2")
 
   var curResult: PiApprox = PiApprox(22.0/7, 0)
 
   def receive = {
+    case 'start =>
+      server ! "start"
     case 'join =>
       sender ! pushTo
       self ! curResult
-      server ! new NeuerArbeiter(fastClient)
-      //server ! new NeuerArbeiter(slowClient1)
-      //server ! new NeuerArbeiter(slowClient2)
     case approx @ PiApprox(pi, n) =>
       curResult = approx
       val msg = JsObject(

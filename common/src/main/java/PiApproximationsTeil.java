@@ -2,7 +2,7 @@ package akkapi.common;
 
 import java.math.BigDecimal;
 
-public class PiApproximationsTeil {
+public class PiApproximationsTeil implements java.io.Serializable {
   public final long von, bis;
   public final BigDecimal ergebnis;
 

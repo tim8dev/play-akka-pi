@@ -20,10 +20,6 @@ import java.util.concurrent.TimeUnit;
    "Another formula (1989)
  */
 public class FastClient extends Client {
-  public FastClient(int genauigkeit) {
-    super(genauigkeit); 
-  }
-
   private static BigDecimal eins = new BigDecimal(1);
   private static BigDecimal zwoelf = new BigDecimal(12);
 
@@ -51,11 +47,7 @@ public class FastClient extends Client {
   }
 
   @Override
-  protected BigDecimal kalkuliereApproximationsTeil(long von, long bis) {
-    /*  return calc(von, bis);
-  }
-    
-  public static BigDecimal calc(long von, long bis) {*/
+  protected BigDecimal kalkuliereApproximationsTeil(long von, long bis, int genauigkeit) {
     BigDecimal summe = new BigDecimal(0);
     for (long i = von; i < bis; i += 1) {
       BigDecimal I = new BigDecimal(i);
@@ -76,6 +68,6 @@ public class FastClient extends Client {
 	summe = summe.subtract(e);
       }
     }
-    return summe.multiply(zwoelf);//, genauigkeit, RoundingMode.HALF_UP);
+    return summe.multiply(zwoelf);
   }
 }

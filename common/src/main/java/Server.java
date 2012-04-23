@@ -14,6 +14,7 @@ import akka.util.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class Server extends UntypedActor {
+  private final int genauigkeit;
   private final int anzahlProPacket;
   private long anzahlNummern = 0;
 
@@ -26,35 +27,40 @@ public class Server extends UntypedActor {
   private final ActorRef benachrichtigen;
   private final List<ActorRef> clients = new LinkedList<ActorRef>();
 
-  public Server(final int anzahlProPacket, ActorRef benachrichtigen) {
+  public Server(int anzahlProPacket, int genauigkeit, ActorRef benachrichtigen) {
     this.anzahlProPacket = anzahlProPacket;
+    this.genauigkeit = genauigkeit;
     this.benachrichtigen = benachrichtigen;
+
+    System.out.println("Server ist bereit :)");
   }
 
   public Arbeit neueArbeit() {
     long von = vergebenBis;
     vergebenBis += anzahlProPacket;
     long bis = vergebenBis;
-    return new Arbeit(von, bis);
+    return new Arbeit(von, bis, genauigkeit);
   }
 
   public void neuesErgebnis() {
     System.out.println("Neue approx., anzahlNummern = " + anzahlNummern);
     PiApproximationsTeil piGesamt = new PiApproximationsTeil(0, anzahlNummern, pi);
-    //for(ActorRef aktor: benachrichtigen) {
     benachrichtigen.tell(piGesamt);
-      //}
   }
 
   public void onReceive(Object nachricht) {
-    if (nachricht instanceof NeuerArbeiter) {
+    if (nachricht == "start") {
+      System.out.println("Let's start!");
+      for(int i = 0; i < 3; i++) {
+	for(ActorRef client : clients) {
+	  System.out.println("Arbeiter " + client + " kriegt mehr Arbeit");
+	  client.tell(neueArbeit(), getSelf());
+	}
+      }
+    } else if (nachricht instanceof NeuerArbeiter) {
       ActorRef na = ((NeuerArbeiter) nachricht).aktor;
       System.out.println("Neuer Arbeiter: " + na);
       clients.add(na);
-      // 3x damit Client immer was zu tun hat ,-)
-      na.tell(neueArbeit(), getSelf());
-      na.tell(neueArbeit(), getSelf());
-      na.tell(neueArbeit(), getSelf());
     } else if (nachricht instanceof PiApproximationsTeil) {
       getSender().tell(neueArbeit(), getSelf());
  
@@ -65,34 +71,9 @@ public class Server extends UntypedActor {
 
       neuesErgebnis();
     } else {
+      System.out.println("Oh.. no: " + nachricht);
       unhandled(nachricht);
     }
   }
-
-  public static void main(String args[]) {
-    ActorSystem system = ActorSystem.create("PiSystem");
-    ActorRef server = system.actorOf(new Props(Server.class), "server");
-    ActorRef client1 = system.actorOf(new Props(Client.class), "client");
-    server.tell(new NeuerArbeiter(client1)); 
-  }
 }
 
-/**
-    ActorSystem system = ActorSystem.create("PiSystem");
-
-    // create the result listener, which will print the result and shutdown the system
-    final ActorRef listener = system.actorOf(new Props(Listener.class), "listener");
-
-    // create the master
-    ActorRef master = system.actorOf(new Props(new UntypedActorFactory() {
-      public UntypedActor create() {
-        return new Master(nrOfWorkers, nrOfMessages, nrOfElements, listener);
-      }
-    }), "master");
-
-    // start the calculation
-    master.tell(new Calculate());
-
-  }
-}
-*/
