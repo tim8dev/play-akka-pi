@@ -15,12 +15,26 @@ import akka.util.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class Client extends UntypedActor {
+  private long gestartet = 0;
+  // Zeit in millisekunden
+  private long laufzeit() {
+    return System.currentTimeMillis() - gestartet;
+  }
+  private long n = 0;
+  // Geschwindigkeit in n/sec
+  private long geschwindigkeit = 0;
   protected int genauigkeit = 1000;
 
   // Brauchen wir für die Kalkulation:
   private static final BigDecimal vier = new BigDecimal(4);
   private static final BigDecimal eins = new BigDecimal(1);
   private static final BigDecimal minusEins = eins.negate();
+
+  private void neueGeschwindigkeit(long neu) {
+    n += neu;
+    geschwindigkeit = (n * 1000) / laufzeit();
+    System.out.println("Unsere Geschwindigkeit: " + geschwindigkeit + " glieder/sec");
+  }
 
   protected BigDecimal kalkuliereApproximationsTeil(long von, long bis, int genauigkeit) {
     BigDecimal summe = new BigDecimal(0);
@@ -37,10 +51,13 @@ public class Client extends UntypedActor {
 
   public void onReceive(Object nachricht) {
     if (nachricht instanceof Arbeit) {
+      if(n == 0) {
+	gestartet = System.currentTimeMillis();
+      }
       Arbeit arbeit = (Arbeit) nachricht;
-      System.out.println("Ich hab Arbeit, von " + arbeit.von + " bis " + arbeit.bis);
       BigDecimal ergebnis = kalkuliereApproximationsTeil(arbeit.von, arbeit.bis, arbeit.genauigkeit);
       getSender().tell(new PiApproximationsTeil(arbeit.von, arbeit.bis, ergebnis), getSelf());
+      neueGeschwindigkeit(arbeit.laenge());
     } else {
       unhandled(nachricht);
     }

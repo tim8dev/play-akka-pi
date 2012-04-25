@@ -4,11 +4,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 // Wichtige Klassen importieren
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
-import akka.actor.UntypedActor;
-import akka.actor.UntypedActorFactory;
+import akka.actor.*;
 import akka.routing.RoundRobinRouter;
 import akka.util.Duration;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +14,7 @@ public class Server extends UntypedActor {
   private final int anzahlProPacket;
   private long anzahlNummern = 0;
 
+  private boolean gestartet = false;
   private long vergebenBis = 0;
 
   private BigDecimal pi = new BigDecimal(0);
@@ -35,11 +32,17 @@ public class Server extends UntypedActor {
     System.out.println("Server ist bereit :)");
   }
 
-  public Arbeit neueArbeit() {
+  public void neueArbeit(ActorRef client) {
     long von = vergebenBis;
-    vergebenBis += anzahlProPacket;
+    if(vergebenBis < anzahlProPacket) {
+      // Die ersten x Pakete mit Paketgröße < 16, damit wir schnell eine gute Approximation kriegen.
+      vergebenBis += Math.min(anzahlProPacket, 16);
+    } else {
+      vergebenBis += anzahlProPacket;
+    }
     long bis = vergebenBis;
-    return new Arbeit(von, bis, genauigkeit);
+    System.out.println("Arbeiter " + client + " kriegt Arbeit");
+    client.tell(new Arbeit(von, bis, genauigkeit), getSelf());
   }
 
   public void neuesErgebnis() {
@@ -51,19 +54,22 @@ public class Server extends UntypedActor {
   public void onReceive(Object nachricht) {
     if (nachricht == "start") {
       System.out.println("Let's start!");
-      for(int i = 0; i < 3; i++) {
+      gestartet = true;
+      for(int i = 0; i < 2; i++) {
 	for(ActorRef client : clients) {
-	  System.out.println("Arbeiter " + client + " kriegt mehr Arbeit");
-	  client.tell(neueArbeit(), getSelf());
+	  neueArbeit(client);
 	}
       }
     } else if (nachricht instanceof NeuerArbeiter) {
       ActorRef na = ((NeuerArbeiter) nachricht).aktor;
       System.out.println("Neuer Arbeiter: " + na);
       clients.add(na);
+      if(gestartet) {
+	neueArbeit(na);
+      }
     } else if (nachricht instanceof PiApproximationsTeil) {
-      getSender().tell(neueArbeit(), getSelf());
- 
+      neueArbeit(getSender());
+
       PiApproximationsTeil teil = (PiApproximationsTeil) nachricht;
       //System.out.println("Neues Teilergebnis: " + teil);
       pi = pi.add(teil.ergebnis);
@@ -71,7 +77,6 @@ public class Server extends UntypedActor {
 
       neuesErgebnis();
     } else {
-      System.out.println("Oh.. no: " + nachricht);
       unhandled(nachricht);
     }
   }

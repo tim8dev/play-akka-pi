@@ -23,8 +23,8 @@ object Application extends Controller {
   val defResult = PiApprox(BigDecimal(3.141), 0)
   val piActor: ActorRef = akkapi.actorOf(Props[PiResultListener], name = "webclient")
 
-  def index = Action { 
-    Ok("Jo :)")
+  def index = Action { implicit request =>
+    Ok(views.html.index(defResult))
   }
 
   def start = Action { implicit request =>

@@ -21,10 +21,11 @@ import akkapi.common._
 case class PiApprox(approx: BigDecimal, n: Long)
 
 class PiResultListener extends Actor {
-  val i = 128
-  val genauigkeit = 1000
+  val i = 8192 
+  val genauigkeit = 200
 
-  val pushTo: PushEnumerator[JsValue] = Enumerator.imperative[JsValue]()
+  var pushTo: List[PushEnumerator[JsValue]] = Nil
+  def newEnum() = Enumerator.imperative[JsValue]()
   val server: ActorRef = context.system.actorOf(Props(new Server(i, genauigkeit, self)), name = "server")
   //val fastClient: ActorRef = context.actorOf(Props(new FastClient(genauigkeit)), name = "fast")
 
@@ -34,14 +35,16 @@ class PiResultListener extends Actor {
     case 'start =>
       server ! "start"
     case 'join =>
-      sender ! pushTo
+      val enum = newEnum()
+      pushTo = enum :: pushTo
+      sender ! enum
       self ! curResult
     case approx @ PiApprox(pi, n) =>
       curResult = approx
       val msg = JsObject(
 	Seq("pi" -> JsArray(prettifyPi(pi)), "n" -> JsString(prettifyInt(n)))
       )
-      pushTo.push(msg) 
+      pushTo foreach { _.push(msg) }
     case teil : PiApproximationsTeil =>
       //self ! PiApprox(BigDecimal(1).underlying.divide(teil.ergebnis, genauigkeit, RoundingMode.HALF_UP), teil.bis)
       self ! PiApprox(teil.ergebnis, teil.bis)
@@ -51,12 +54,14 @@ class PiResultListener extends Actor {
 
   def prettifyInt(n: Long) =
     n.toString.reverse.grouped(3).mkString(".").reverse
+
   def prettifyPi(pi: BigDecimal) = {
     val str = pi.toString
     val first = str.take(102)
     val lines = first :: str.drop(102).grouped(100).toList
     val indexedLines = lines.zipWithIndex map { case (str, i) =>
-      "(" + (i + 1) + ".) " + (if(i == 0) "" else "__") + str
+      val idx = if(i < 9) "0" + (i + 1) else "" + (i + 1) 
+      "(" + idx + ".) " + (if(i == 0) "" else "__") + str
     }
     indexedLines.map(JsString(_))
   }
