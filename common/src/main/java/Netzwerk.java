@@ -6,12 +6,17 @@ import com.typesafe.config.*;
 import akka.actor.*;
 import akka.remote.RemoteScope;
 
+/**
+ * The main class (entry point for the clients).
+ * You can connect many clients listening on different ports (use as many clients as cores you have).
+ * Try connecting from different computers!
+ */
 public class Netzwerk {
   public static void main(String[] args) {
     Console console = System.console();
-    String eigeneIp = console.readLine("Eigene IP (siehe Desktop): ");
-    String eigenerPort = console.readLine("Eigener Port (z.B. 10000): ");
-    String host = console.readLine("Server-IP (10.1.12.68):");
+    String eigeneIp = console.readLine("your IP: ");
+    String eigenerPort = console.readLine("your port: ");
+    String host = console.readLine("server IP:");
     String port = "31337";
     String addr = "akka://akkapi@" + host + ":" + port + "/user/server";
 
