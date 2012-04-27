@@ -22,7 +22,7 @@ case class PiApprox(approx: BigDecimal, n: Long)
 
 class PiResultListener extends Actor {
   val i = 8192 
-  val genauigkeit = 200
+  val genauigkeit = 100
 
   var pushTo: List[PushEnumerator[JsValue]] = Nil
   def newEnum() = Enumerator.imperative[JsValue]()

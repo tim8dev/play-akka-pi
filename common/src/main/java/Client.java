@@ -33,7 +33,7 @@ public class Client extends UntypedActor {
   private void neueGeschwindigkeit(long neu) {
     n += neu;
     geschwindigkeit = (n * 1000) / laufzeit();
-    System.out.println("Unsere Geschwindigkeit: " + geschwindigkeit + " glieder/sec");
+    System.out.println("Geschwindigkeit (nur dieser client): " + geschwindigkeit + " glieder/sec");
   }
 
   protected BigDecimal kalkuliereApproximationsTeil(long von, long bis, int genauigkeit) {

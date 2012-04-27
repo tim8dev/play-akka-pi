@@ -41,12 +41,10 @@ public class Server extends UntypedActor {
       vergebenBis += anzahlProPacket;
     }
     long bis = vergebenBis;
-    System.out.println("Arbeiter " + client + " kriegt Arbeit");
     client.tell(new Arbeit(von, bis, genauigkeit), getSelf());
   }
 
   public void neuesErgebnis() {
-    System.out.println("Neue approx., anzahlNummern = " + anzahlNummern);
     PiApproximationsTeil piGesamt = new PiApproximationsTeil(0, anzahlNummern, pi);
     benachrichtigen.tell(piGesamt);
   }
@@ -55,7 +53,7 @@ public class Server extends UntypedActor {
     if (nachricht == "start") {
       System.out.println("Let's start!");
       gestartet = true;
-      for(int i = 0; i < 2; i++) {
+      for(int i = 0; i < 3; i++) {
 	for(ActorRef client : clients) {
 	  neueArbeit(client);
 	}
@@ -66,12 +64,12 @@ public class Server extends UntypedActor {
       clients.add(na);
       if(gestartet) {
 	neueArbeit(na);
+	neueArbeit(na);
       }
     } else if (nachricht instanceof PiApproximationsTeil) {
       neueArbeit(getSender());
 
       PiApproximationsTeil teil = (PiApproximationsTeil) nachricht;
-      //System.out.println("Neues Teilergebnis: " + teil);
       pi = pi.add(teil.ergebnis);
       anzahlNummern += teil.laenge();
 
