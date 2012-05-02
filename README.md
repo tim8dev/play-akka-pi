@@ -12,7 +12,7 @@ We learnt something oldschool about threads and locking and race-conditions, so 
 
 That's the reason why the application (pi approximation) code is completely 100% Java. It's also coded in "German", so variables etc. are in German, following our in-course-conventions. (We used to write all class names IN_UPPERCASE, but I drop that convention in favor of the somehow wider spread standard, writing them in CamelCase)
 
-Play Code is written in Scala and using englisch variable names, I'm not assuming any of my class members (teacher) included wants to understand that, and if, they won't struggle from this piece of Scala code anyway. ;-)
+Play Code is written in Scala and using englisch variable names, I'm not assuming any of my class members wants to understand that, and if, they won't struggle from this piece of Scala code anyway. ;-)
 
 Pi Approximation distributed over the network using AKKA 2.0 Remote Actors :-)
 
