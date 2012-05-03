@@ -42,11 +42,7 @@ public class Netzwerk {
 
     System.out.println("Server Aktor ist " + server);
     
-    ActorRef client = akkapi.actorOf(new Props(new UntypedActorFactory() {
-	public UntypedActor create() {
-	  return new Client();
-	}
-      }), "client");
+    ActorRef client = akkapi.actorOf(new Props(Client.class), "client");
 
     System.out.println("Client erstellt");
 
