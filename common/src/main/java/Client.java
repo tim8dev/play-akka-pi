@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Client extends UntypedActor {
   private long gestartet = 0;
+  private long letzteAusgabe = 0;
   // Zeit in millisekunden
   private long laufzeit() {
     return System.currentTimeMillis() - gestartet;
@@ -33,7 +34,10 @@ public class Client extends UntypedActor {
   private void neueGeschwindigkeit(long neu) {
     n += neu;
     geschwindigkeit = (n * 1000) / laufzeit();
-    System.out.println("Geschwindigkeit (nur dieser client): " + geschwindigkeit + " glieder/sec");
+    if(laufzeit() - letzteAusgabe >= 1000) {
+      letzteAusgabe = laufzeit();
+      System.out.println("Geschwindigkeit (nur dieser client): " + geschwindigkeit + " glieder/sec");
+    }
   }
 
   protected BigDecimal kalkuliereApproximationsTeil(long von, long bis, int genauigkeit) {
