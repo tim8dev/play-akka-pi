@@ -27,7 +27,7 @@ Point the client's browsers to http://server.ip:9000/ and download the client.zi
 Benchmark
 ---------
 
-Using a precision of 200 digits and message chunks of 8096 parts each, the current record is roughly a speed ("geschwindigkeit") of 6*600k parts of the sum per second (running on a 6-core AMD processor).
+Using a precision of 200 digits and message chunks of 8096 parts each, the current record is roughly a speed ("Geschwindigkeit") of 6*600k parts of the sum per second (running on a 6-core AMD processor).
 
 When I did the presentation in school, we processed 2500m parts of the sum in some 15 minutes.
 Some 10 or 20 clients were connected, each having a power to produce roughly 250k parts of the sum per second. 

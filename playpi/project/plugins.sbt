@@ -6,3 +6,7 @@ resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/release
 
 // Use the Play sbt plugin for Play projects
 addSbtPlugin("play" % "sbt-plugin" % "2.0")
+
+resolvers += "twitter.com" at "http://maven.twttr.com/"
+
+addSbtPlugin("com.twitter" % "sbt-package-dist" % "1.0.4")
