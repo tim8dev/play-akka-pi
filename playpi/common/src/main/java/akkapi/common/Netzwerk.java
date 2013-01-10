@@ -14,8 +14,12 @@ import akka.remote.RemoteScope;
 public class Netzwerk {
   public static void main(String[] args) {
     Console console = System.console();
-    String eigeneIp = console.readLine("your IP: ");
+    //String eigeneIp = console.readLine("your IP: ");
+    String eigeneIp = "127.0.0.1";
     String eigenerPort = console.readLine("your port: ");
+    if(eigenerPort.trim() == "") {
+        eigenerPort = "31331";
+    }
     String host = console.readLine("server IP:");
     String port = "31337";
     String addr = "akka://akkapi@" + host + ":" + port + "/user/server";

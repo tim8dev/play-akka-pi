@@ -1,42 +1,28 @@
 package akkapi.common;
 
-import java.util.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 // Wichtige Klassen importieren
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
 import akka.actor.UntypedActor;
-import akka.actor.UntypedActorFactory;
-import akka.routing.RoundRobinRouter;
-import akka.util.Duration;
-import java.util.concurrent.TimeUnit;
 
 public class Client extends UntypedActor {
-  private long gestartet = 0;
-  private long letzteAusgabe = 0;
-  // Zeit in millisekunden
-  private long laufzeit() {
-    return System.currentTimeMillis() - gestartet;
-  }
-  private long n = 0;
-  // Geschwindigkeit in n/sec
-  private long geschwindigkeit = 0;
-  protected int genauigkeit = 1000;
-
   // Brauchen wir für die Kalkulation:
   private static final BigDecimal vier = new BigDecimal(4);
   private static final BigDecimal eins = new BigDecimal(1);
   private static final BigDecimal minusEins = eins.negate();
 
-  private void neueGeschwindigkeit(long neu) {
-    n += neu;
-    geschwindigkeit = (n * 1000) / laufzeit();
-    if(laufzeit() - letzteAusgabe >= 1000) {
-      letzteAusgabe = laufzeit();
-      System.out.println("Geschwindigkeit (nur dieser client): " + geschwindigkeit + " glieder/sec");
+  public void onReceive(Object nachricht) {
+    if (nachricht instanceof Arbeit) {
+      if(n == 0) {
+	    gestartet = System.currentTimeMillis();
+      }
+      Arbeit arbeit = (Arbeit) nachricht;
+      BigDecimal ergebnis = kalkuliereApproximationsTeil(arbeit.von, arbeit.bis, arbeit.genauigkeit);
+      getSender().tell(new Summand(arbeit.von, arbeit.bis, ergebnis), getSelf());
+      neueGeschwindigkeit(arbeit.laenge());
+    } else {
+      unhandled(nachricht);
     }
   }
 
@@ -53,17 +39,25 @@ public class Client extends UntypedActor {
     return summe.multiply(vier);
   }
 
-  public void onReceive(Object nachricht) {
-    if (nachricht instanceof Arbeit) {
-      if(n == 0) {
-	gestartet = System.currentTimeMillis();
-      }
-      Arbeit arbeit = (Arbeit) nachricht;
-      BigDecimal ergebnis = kalkuliereApproximationsTeil(arbeit.von, arbeit.bis, arbeit.genauigkeit);
-      getSender().tell(new PiApproximationsTeil(arbeit.von, arbeit.bis, ergebnis), getSelf());
-      neueGeschwindigkeit(arbeit.laenge());
-    } else {
-      unhandled(nachricht);
+  // Für die Statistik:
+
+  private long gestartet = 0;
+  private long letzteAusgabe = 0;
+  // Zeit in millisekunden
+  private long laufzeit() {
+    return System.currentTimeMillis() - gestartet;
+  }  private long n = 0;
+
+  // Geschwindigkeit in n/sec
+  private long geschwindigkeit = 0;
+  protected int genauigkeit = 1000;
+
+  private void neueGeschwindigkeit(long neu) {
+    n += neu;
+    geschwindigkeit = (n * 1000) / laufzeit();
+    if(laufzeit() - letzteAusgabe >= 1000) {
+      letzteAusgabe = laufzeit();
+      System.out.println("Geschwindigkeit (nur dieser client): " + geschwindigkeit + " glieder/sec");
     }
   }
 }

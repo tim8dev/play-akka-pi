@@ -5,11 +5,10 @@ import java.util.*;
 
 // Wichtige Klassen importieren
 import akka.actor.*;
-import akka.routing.RoundRobinRouter;
-import akka.util.Duration;
-import java.util.concurrent.TimeUnit;
 
 public class Server extends UntypedActor {
+    //private final
+
     private final int genauigkeit;
     private final int anzahlProPacket;
     private long anzahlNummern = 0;
@@ -17,10 +16,10 @@ public class Server extends UntypedActor {
     private boolean gestartet = false;
     private long vergebenBis = 0;
 
+    //private Map<Integer, ActorRef> vergabe = new HashMap<Integer, ActorRef>();
+
     private BigDecimal pi = new BigDecimal(0);
 
-    private final long beginn = System.currentTimeMillis();
-  
     private final ActorRef benachrichtigen;
     private final List<ActorRef> clients = new LinkedList<ActorRef>();
 
@@ -30,23 +29,6 @@ public class Server extends UntypedActor {
         this.benachrichtigen = benachrichtigen;
 
         System.out.println("Server ist bereit :)");
-    }
-
-    public void neueArbeit(ActorRef client) {
-        long von = vergebenBis;
-        if(vergebenBis < anzahlProPacket) {
-            // Die ersten x Pakete mit Paketgröße < 4, damit wir schnell eine gute Approximation kriegen.
-            vergebenBis += Math.min(anzahlProPacket, 4);
-        } else {
-            vergebenBis += anzahlProPacket;
-        }
-        long bis = vergebenBis;
-        client.tell(new Arbeit(von, bis, genauigkeit), getSelf());
-    }
-
-    public void neuesErgebnis() {
-        PiApproximationsTeil piGesamt = new PiApproximationsTeil(0, anzahlNummern, pi);
-        benachrichtigen.tell(piGesamt);
     }
 
     public void onReceive(Object nachricht) {
@@ -66,10 +48,10 @@ public class Server extends UntypedActor {
                 neueArbeit(na);
                 neueArbeit(na);
             }
-        } else if (nachricht instanceof PiApproximationsTeil) {
+        } else if (nachricht instanceof Summand) {
             neueArbeit(getSender());
 
-            PiApproximationsTeil teil = (PiApproximationsTeil) nachricht;
+            Summand teil = (Summand) nachricht;
             pi = pi.add(teil.ergebnis);
             anzahlNummern += teil.laenge();
 
@@ -77,6 +59,19 @@ public class Server extends UntypedActor {
         } else {
             unhandled(nachricht);
         }
+    }
+
+    public void neueArbeit(ActorRef client) {
+        long von = vergebenBis;
+        // Die ersten x Pakete mit Paketgröße < 4, damit wir schnell eine gute Approximation kriegen.
+        long laenge = vergebenBis < anzahlProPacket ? 4 : anzahlProPacket;
+        vergebenBis += laenge;
+        client.tell(new Arbeit(von, laenge, genauigkeit), getSelf());
+    }
+
+    public void neuesErgebnis() {
+        Summand piGesamt = new Summand(0, anzahlNummern, pi);
+        benachrichtigen.tell(piGesamt);
     }
 }
 

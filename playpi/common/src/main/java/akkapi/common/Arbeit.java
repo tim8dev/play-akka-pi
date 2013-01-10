@@ -2,13 +2,13 @@ package akkapi.common;
 
 public class Arbeit implements java.io.Serializable {
   final int genauigkeit;
-  final long von, bis;
+  final long von, laenge;
 
-  public Arbeit(long von, long bis, int genauigkeit) {
+  public Arbeit(long von, long laenge, int genauigkeit) {
     this.von = von;
-    this.bis = bis;
+    this.laenge = laenge;
     this.genauigkeit = genauigkeit;
   }
 
-  public long laenge() { return bis - von; }
+  public long bis() { return von + laenge; }
 }

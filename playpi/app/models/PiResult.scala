@@ -27,7 +27,6 @@ class PiResultListener extends Actor {
   var pushTo: List[PushEnumerator[JsValue]] = Nil
   def newEnum() = Enumerator.imperative[JsValue]()
   val server: ActorRef = context.system.actorOf(Props(new Server(i, genauigkeit, self)), name = "server")
-  //val fastClient: ActorRef = context.actorOf(Props(new FastClient(genauigkeit)), name = "fast")
 
   var curResult: PiApprox = PiApprox(22.0/7, 0)
 
@@ -42,10 +41,10 @@ class PiResultListener extends Actor {
     case approx @ PiApprox(pi, n) =>
       curResult = approx
       val msg = JsObject(
-	Seq("pi" -> JsArray(prettifyPi(pi)), "n" -> JsString(prettifyInt(n)))
+        Seq("pi" -> JsArray(prettifyPi(pi)), "n" -> JsString(prettifyInt(n)))
       )
       pushTo foreach { _.push(msg) }
-    case teil : PiApproximationsTeil =>
+    case teil : Summand =>
       //self ! PiApprox(BigDecimal(1).underlying.divide(teil.ergebnis, genauigkeit, RoundingMode.HALF_UP), teil.bis)
       self ! PiApprox(teil.ergebnis, teil.bis)
     case 'stop =>

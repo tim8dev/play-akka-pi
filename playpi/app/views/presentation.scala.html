@@ -1,0 +1,219 @@
+@()
+
+<!DOCTYPE html>
+<!--
+  Google HTML5 slide template
+
+  Authors: Luke Mahé (code)
+           Marcin Wichary (code and design)
+           
+           Dominic Mazzoni (browser compatibility)
+           Charles Chen (ChromeVox support)
+
+  URL: http://code.google.com/p/html5slides/
+
+  Tim Taubner:
+  Adapted for my first TNG-TechDay presentation!
+  First Presentation with integrated WebSocket, that I am aware of. =]
+-->
+  <html>
+    <head>
+      <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+      <title>Presentation</title>
+
+      <meta charset="utf-8">
+      <script src="@routes.Assets.at("presentation.scala_files/slides.asc")"></script>
+      <style>
+        /* Your individual styles here, or just use inline styles if that’s
+        what you want. */
+      </style>
+      <meta content="width=1100,height=750" name="viewport">
+      <meta content="yes" name="apple-mobile-web-app-capable">
+    </head>
+
+    <body class="loaded" onload="prettyPrint()" style="display: none">
+      <section class="slides layout-regular template-default">
+
+      <!-- Your slides (<article>s) go here. Delete or comment out the
+           slides below. -->
+
+        <article class="fill current">
+          <img src="@routes.Assets.at("images/tng_front.png")">
+          <div class="source white">
+            Tim in the mirror
+          </div>
+        </article>
+
+        <article class="next">
+          <h1>
+            Prototypische Annäherung <br>
+            an &pi;, Akka und Play
+          </h1>
+          <p>
+            Tim Taubner <br>
+            2013年 1月 11日
+          </p>
+        </article>
+
+        <article class="far-next">
+          <h3>Motivation</h3>
+          <ul>
+            <li>Scala, Akka und Play ausprobieren</li>
+            <li>Aktoren statt Threads</li>
+            <li>Remote-Actors!</li>
+            <li>Gute Note in Informatik :D</li>
+            <li>Spaß mit Mathe</li>
+            <li>Java/Scala Interop</li>
+          </ul>
+          <p>
+            <b>Ergebnis:</b> <br>
+            Pi-Approximation mit Aktoren über ein Cluster mit dynamischem Join/Leave.
+            Idee übernommen aus
+            <a href="http://typesafe.com/resources/tutorials/getting-started-with-akka-scala.html">
+              Akka Getting Started Example
+            </a>
+          </p>
+        </article>
+
+        <article>
+          <h3>Let's start with math!</h3>
+          <ul>
+            <li></li>
+          </ul>
+          <p>
+            Wir wissen &nbsp;
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <mrow><msubsup><mo lspace="0" rspace="0.167em" stretchy="false">&#x2211;</mo><mrow><mi>n</mi><mo lspace="0" rspace="0">=</mo><mn>0</mn></mrow><mi mathvariant="normal">&#x221e;</mi></msubsup><mfrac><mrow><mo lspace="0" rspace="0" stretchy="false">(</mo><mo lspace="0" rspace="0">-</mo><mn>1</mn><msup><mo lspace="0" rspace="0" stretchy="false">)</mo><mi>n</mi></msup></mrow><mrow><mn>2</mn><mi>n</mi><mo lspace="0" rspace="0">+</mo><mn>1</mn></mrow></mfrac><mo lspace="0.278em" rspace="0.278em">=</mo><mn>1</mn><mo lspace="0.222em" rspace="0.222em">-</mo><mfrac><mn>1</mn><mn>3</mn></mfrac><mo lspace="0.222em" rspace="0.222em">+</mo><mfrac><mn>1</mn><mn>5</mn></mfrac><mo lspace="0.222em" rspace="0.222em">-</mo><mfrac><mn>1</mn><mn>7</mn></mfrac><mo lspace="0.222em" rspace="0.222em">+</mo><mo lspace="0" rspace="0">.</mo><mo lspace="0" rspace="0">.</mo><mo lspace="0" rspace="0.278em">.</mo><mo lspace="0" rspace="0.278em">=</mo><mfrac><mi>&#x3c0;</mi><mn>4</mn></mfrac><mo lspace="0" rspace="0">.</mo></mrow
+            </math>
+          </p>
+          <p>
+            Alle Glieder können unabhängig voneinander berechnet werden,
+            also prinzipiell unendlich horizontal skalierbar - ohne Overhead!
+          </p>
+          <ul>
+            <li><b>Idee: </b> Aufteilen des Workloads auf beliebig viele Nodes.</li>
+            <li>Startindex und Anzahl Glieder übermitteln</li>
+            <li>alle Zwischensummanden aufsummieren.</li>
+            <li>Es wird keine Summe zu viel gebildet!</li>
+          </ul>
+        </article>
+
+        <article>
+          <h3>Implementation - in Java</h3>
+          <ul class="build">
+            <li class="to-build"><b>Aktoren-Klassen</b> <br> Server, Client</li>
+            <li class="to-build"><b>Nachricht-Klassen</b> <br> NeuerArbeiter, Arbeit, PiApproximationsTeil</li>
+            <li class="to-build">Festgelegte Genauigkeit mit BigDecimal</li>
+          </ul>
+        </article>
+
+        <article>
+          <h3>Client.java</h3>
+          <pre class="prettyprint linenums">
+<code class="language-java">public void onReceive(Object nachricht) {
+  // Pseudo-pattern-match
+  if (nachricht instanceof Arbeit) {
+    Arbeit arbeit = (Arbeit) nachricht;
+    BigDecimal ergebnis = // Ergebnis berechnen:
+    kalkuliereSummand(arbeit.von, arbeit.bis, arbeit.genauigkeit);
+    // An den Sender (= Server) antworten:
+    getSender().tell(new Summand(arbeit.von, arbeit.bis, ergebnis), getSelf());
+  } else {
+    unhandled(nachricht);
+  }
+}</code>
+          </pre>
+        </article>
+
+        <article>
+          <h3>Server.java</h3>
+          <pre class="prettyprint linenums">
+<code class="language-java">public void onReceive(Object nachricht) {
+  if (nachricht instanceof NeuerArbeiter) {
+    ActorRef na = ((NeuerArbeiter) nachricht).aktor;
+    clients.add(na);
+    // Erstmal Arbeit für den Client:
+    neueArbeit(na);
+  } else if (nachricht instanceof Summand) {
+    // Summanden aufaddieren
+    Summand s = (Summand) nachricht;
+    pi = pi.add(s.ergebnis);
+    // Neue Arbeit an den Sender!
+    neueArbeit(getSender());
+  } else {
+    unhandled(nachricht);
+  }
+}</code></pre>
+        </article>
+
+        <article>
+          <h3>Netzwerk.java</h3>
+          <ul class="build">
+            <li class="to-build">Server IP ist Clients bekannt</li>
+            <li class="to-build">Benutzt IP und Port für RemoteActor</li>
+            <li class="to-build">Remoting wird von Akka implementiert</li>
+          </ul>
+        </article>
+
+        <article class="smaller">
+          <h3>Live demo</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>U/D</th>
+                <th>Name</th>
+                <th>IP</th>
+                <th>Port</th>
+                <th>Geschwindigkeit</th>
+                <th>Summand</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th class="green">Up!</th>
+                <td>Tim</td>
+                <td>127.0.0.1</td>
+                <td>31337</td>
+                <td>800000</td>
+                <td>2.781</td>
+              </tr>
+            </tbody>
+          </table>
+
+          Aktuelle Approximation
+          <p class="pi">
+            3.141 = 22/7
+          </p>
+
+          <p class="grey" style="position: absolute; bottom: 42px;">
+            Brought to you by WebSockets
+          </p>
+        </article>
+
+        <article class="smaller">
+          <h3>Problem</h3>
+          <q>
+            A distributed system is one in which the failure of a computer
+            you didn’t even know existed can render your own computer unusable.
+          </q>
+          <div class="author">Leslie Lamport</div>
+        </article>
+
+        <article class="smaller">
+          <h3>Fehlererkennung und -behebung</h3>
+          <ul>
+            <li>Timeouts auf dem Server für jede verteilte Arbeit</li>
+            <li>Nicht erfüllte Arbeit wird neuverteilt</li>
+            <li>Getrennten Clients wird keine Arbeit zugeteilt</li>
+          </ul>
+          <p>
+            Seit Akka 2.1 (Scala 2.10) gibt es Akka Cluster, die alles besser machen!
+          </p>
+        </article>
+      </section>
+
+      <link href="@routes.Assets.at("presentation.scala_files/css.css")" type="text/css" rel="stylesheet">
+      <link href="@routes.Assets.at("presentation.scala_files/styles.css")" type="text/css" rel="stylesheet">
+      <script src="@routes.Assets.at("presentation.scala_files/prettify.asc")" type="text/javascript"></script>
+    </body>
+  </html>
