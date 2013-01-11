@@ -1,4 +1,4 @@
-@()
+@(result: PiApprox)(implicit request: RequestHeader)
 
 <!DOCTYPE html>
 <!--
@@ -156,38 +156,7 @@
         </article>
 
         <article class="smaller">
-          <h3>Live demo</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>U/D</th>
-                <th>Name</th>
-                <th>IP</th>
-                <th>Port</th>
-                <th>Geschwindigkeit</th>
-                <th>Summand</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th class="green">Up!</th>
-                <td>Tim</td>
-                <td>127.0.0.1</td>
-                <td>31337</td>
-                <td>800000</td>
-                <td>2.781</td>
-              </tr>
-            </tbody>
-          </table>
-
-          Aktuelle Approximation
-          <p class="pi">
-            3.141 = 22/7
-          </p>
-
-          <p class="grey" style="position: absolute; bottom: 42px;">
-            Brought to you by WebSockets
-          </p>
+          @demo(result)
         </article>
 
         <article class="smaller">

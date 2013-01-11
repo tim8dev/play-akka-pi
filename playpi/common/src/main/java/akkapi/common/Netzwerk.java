@@ -14,8 +14,9 @@ import akka.remote.RemoteScope;
 public class Netzwerk {
   public static void main(String[] args) {
     Console console = System.console();
-    //String eigeneIp = console.readLine("your IP: ");
-    String eigeneIp = "127.0.0.1";
+    String name = console.readLine("Name [azAZ09]: ");
+    String eigeneIp = console.readLine("your IP: ");
+    //String eigeneIp = "127.0.0.1";
     String eigenerPort = console.readLine("your port: ");
     if(eigenerPort.trim() == "") {
         eigenerPort = "31331";
@@ -46,7 +47,7 @@ public class Netzwerk {
 
     System.out.println("Server Aktor ist " + server);
     
-    ActorRef client = akkapi.actorOf(new Props(Client.class), "client");
+    ActorRef client = akkapi.actorOf(new Props(Client.class), name);
 
     System.out.println("Client erstellt");
 

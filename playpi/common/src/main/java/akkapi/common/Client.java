@@ -18,15 +18,15 @@ public class Client extends UntypedActor {
 	    gestartet = System.currentTimeMillis();
       }
       Arbeit arbeit = (Arbeit) nachricht;
-      BigDecimal ergebnis = kalkuliereApproximationsTeil(arbeit.von, arbeit.bis, arbeit.genauigkeit);
-      getSender().tell(new Summand(arbeit.von, arbeit.bis, ergebnis), getSelf());
-      neueGeschwindigkeit(arbeit.laenge());
+      BigDecimal ergebnis = kalkuliereSummand(arbeit.von, arbeit.bis(), arbeit.genauigkeit);
+      getSender().tell(new Summand(arbeit.von, arbeit.laenge, ergebnis), getSelf());
+      neueGeschwindigkeit(arbeit.laenge);
     } else {
       unhandled(nachricht);
     }
   }
 
-  protected BigDecimal kalkuliereApproximationsTeil(long von, long bis, int genauigkeit) {
+  protected BigDecimal kalkuliereSummand(long von, long bis, int genauigkeit) {
     BigDecimal summe = new BigDecimal(0);
     for (long i = von; i < bis; i += 1) {
       // zaehler = (1 - (i % 2) * 2)

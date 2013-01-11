@@ -47,7 +47,7 @@ public class FastClient extends Client {
   }
 
   @Override
-  protected BigDecimal kalkuliereApproximationsTeil(long von, long bis, int genauigkeit) {
+  protected BigDecimal kalkuliereSummand(long von, long bis, int genauigkeit) {
     BigDecimal summe = new BigDecimal(0);
     for (long i = von; i < bis; i += 1) {
       BigDecimal I = new BigDecimal(i);

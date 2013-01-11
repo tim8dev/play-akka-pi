@@ -24,12 +24,16 @@ object Application extends Controller {
   val piActor: ActorRef = akkapi.actorOf(Props[PiResultListener], name = "webclient")
 
   def index = Action { implicit request =>
-    Ok(views.html.presentation())
+    Ok(views.html.demo(defResult))
+  }
+
+  def presentation = Action { implicit request =>
+    Ok(views.html.presentation(defResult))
   }
 
   def start = Action { implicit request =>
     piActor ! 'start
-    Ok(views.html.index(defResult))
+    Ok(views.html.demo(defResult))
   }
 
   def result = WebSocket.async[JsValue] { request =>

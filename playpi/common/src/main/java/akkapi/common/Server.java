@@ -2,13 +2,13 @@ package akkapi.common;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 // Wichtige Klassen importieren
 import akka.actor.*;
+import akka.util.Duration;
 
 public class Server extends UntypedActor {
-    //private final
-
     private final int genauigkeit;
     private final int anzahlProPacket;
     private long anzahlNummern = 0;
@@ -16,12 +16,15 @@ public class Server extends UntypedActor {
     private boolean gestartet = false;
     private long vergebenBis = 0;
 
-    //private Map<Integer, ActorRef> vergabe = new HashMap<Integer, ActorRef>();
+    private final Map<Long, ActorRef> vergabe = new HashMap<Long, ActorRef>();
 
     private BigDecimal pi = new BigDecimal(0);
 
     private final ActorRef benachrichtigen;
     private final List<ActorRef> clients = new LinkedList<ActorRef>();
+    private int freierClient = 0;
+
+    private final Set<ActorRef> offline = new HashSet<ActorRef>();
 
     public Server(int anzahlProPacket, int genauigkeit, ActorRef benachrichtigen) {
         this.anzahlProPacket = anzahlProPacket;
@@ -48,30 +51,85 @@ public class Server extends UntypedActor {
                 neueArbeit(na);
                 neueArbeit(na);
             }
+            online(na);
         } else if (nachricht instanceof Summand) {
             neueArbeit(getSender());
 
             Summand teil = (Summand) nachricht;
-            pi = pi.add(teil.ergebnis);
-            anzahlNummern += teil.laenge();
+
+            ActorRef zugeteiltAn = vergabe.remove(teil.von);
+            if(zugeteiltAn != null) {
+                pi = pi.add(teil.ergebnis);
+                anzahlNummern += teil.laenge;
+            } else {
+                System.out.println("Bereits erledigt!");
+                online(getSender());
+            }
 
             neuesErgebnis();
+        } else if (nachricht instanceof Long) {
+            // Nicht rechtzeitig angekommen!
+            Long l = (Long) nachricht;
+            if(vergabe.containsKey(l)) {
+                ActorRef ersatz = freierClient();
+                verteileArbeitAn(arbeitVon(l, ersatz), ersatz);
+            } else {
+                // Alles im grünen Bereich :-)
+            }
+            offline(getSender());
         } else {
             unhandled(nachricht);
         }
     }
 
+    public ActorRef freierClient() {
+        if(clients.isEmpty()) {
+            return context().system().deadLetters();
+        } else {
+            freierClient += 1;
+            return clients.get(freierClient % clients.size());
+        }
+    }
+
     public void neueArbeit(ActorRef client) {
-        long von = vergebenBis;
+        Arbeit arbeit = arbeitVon(vergebenBis,  client);
+        vergebenBis += arbeit.laenge;
+        verteileArbeitAn(arbeit, client);
+    }
+
+    public Arbeit arbeitVon(Long von, ActorRef client) {
         // Die ersten x Pakete mit Paketgröße < 4, damit wir schnell eine gute Approximation kriegen.
-        long laenge = vergebenBis < anzahlProPacket ? 4 : anzahlProPacket;
-        vergebenBis += laenge;
-        client.tell(new Arbeit(von, laenge, genauigkeit), getSelf());
+        long laenge = von < anzahlProPacket ? 4 : von;
+        vergabe.put(von, client);
+        return new Arbeit(von, laenge, genauigkeit);
+    }
+
+    public void verteileArbeitAn(final Arbeit a, final ActorRef client) {
+        final ActorRef self = getSelf();
+        context().system().scheduler().scheduleOnce(Duration.create(5000, TimeUnit.MILLISECONDS), new Runnable() {
+            @Override
+            public void run() {
+                self.tell(a.von, client);
+            }
+        });
+        client.tell(a, self);
     }
 
     public void neuesErgebnis() {
         Summand piGesamt = new Summand(0, anzahlNummern, pi);
         benachrichtigen.tell(piGesamt);
+    }
+
+    public void online(ActorRef vermisst) {
+        benachrichtigen.tell("online", vermisst);
+        clients.add(vermisst);
+        offline.remove(vermisst);
+    }
+
+    public void offline(ActorRef vermisst) {
+        benachrichtigen.tell("offline", vermisst);
+        clients.remove(vermisst);
+        offline.add(vermisst);
     }
 }
 

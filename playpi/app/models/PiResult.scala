@@ -17,6 +17,7 @@ import akka.util.Timeout
 import akka.pattern.ask
 
 import akkapi.common._
+import akka.remote.RemoteActorRefProvider
 
 case class PiApprox(approx: BigDecimal, n: Long)
 
@@ -25,6 +26,7 @@ class PiResultListener extends Actor {
   val genauigkeit = 100
 
   var pushTo: List[PushEnumerator[JsValue]] = Nil
+
   def newEnum() = Enumerator.imperative[JsValue]()
   val server: ActorRef = context.system.actorOf(Props(new Server(i, genauigkeit, self)), name = "server")
 
@@ -36,8 +38,17 @@ class PiResultListener extends Actor {
     case 'join =>
       val enum = newEnum()
       pushTo = enum :: pushTo
+      Logger.info("Enumerators: " + pushTo)
       sender ! enum
       self ! curResult
+    case evt: String if Set("offline", "online") contains evt =>
+      val who = sender
+      val msg = JsObject(
+        Seq("who" -> JsString(who.path.name), "online" -> JsBoolean(evt == "online")) ++
+          who.path.address.host.map(host => "host" -> JsString(host)) ++
+          who.path.address.port.map(port => "port" -> JsNumber(port))
+      )
+      pushTo foreach { _.push(msg) }
     case approx @ PiApprox(pi, n) =>
       curResult = approx
       val msg = JsObject(
