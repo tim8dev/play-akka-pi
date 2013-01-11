@@ -3,18 +3,18 @@
 <script src="@routes.Assets.at("javascripts/jquery-1.7.1.min.js")" type="text/javascript"></script>
 <script src="@routes.Assets.at("javascripts/handlebars-1.0.rc.1.js")" type="text/javascript"></script>
 
-<a style="font-size: 14px; float: right;" href="/assets/client.zip">Client downloaden</a>
+<a style="font-size: 14px; float: right;" href="/assets/client.zip">Client downloaden (IP: 10.3.2.223)</a>
 
           <h3>Live demo</h3>
           <table>
             <thead>
               <tr>
-                <th>U/D</th>
-                <th>Name</th>
-                <th>IP</th>
-                <th>Port</th>
-                <th>Geschwindigkeit</th>
-                <th>Summand</th>
+                <th>[]</th>
+                <th>x.x.x.x</th>
+                <th>:</th>
+                <th>v [Gl/s]</th>
+                <th>n [Gl]</th>
+                <th>&pi;</th>
               </tr>
             </thead>
             <tbody id="clients">
@@ -31,8 +31,12 @@
 
           <br>
           <b>Aktuelle Approximation</b>
-          <div id="pi" style="font-family: monospace; font-size: 20px;">
+          <div id="pi">
           </div>
+
+<style type="text/css">
+  #pi p { margin: none; font-size: 14px; }
+</style>
 
           <br>
           <b>Anzahl Glieder</b>
@@ -44,16 +48,10 @@
 
   <script id="client-template" type="text/x-handlebars-template">
     <tr id="c{{id}}">
-      <td>
-        {{#if online}}
-          <span class="green">Up!!</span>
-        {{else}}
-          <span class="red">Down!</span>
-        {{/if}}
-      </td>
       <td>{{who}}</td>
       <td>{{host}}</td>
       <td>{{port}}</td>
+      <td>{{v}}</td>
       <td>{{n}}</td>
       <td>{{pi}}</td>
     </tr>
@@ -69,9 +67,9 @@
         var template = Handlebars.compile(source);
 
 	    var receiveEvent = function (event) {
-          console.log("got event: " + event.data);
           var data = JSON.parse(event.data);
           if(data.who) {
+            //console.log("got event: " + event.data);
             var i = clients.indexOf(data.who);
             if(i >= 0) {
               data.id = i;
@@ -82,7 +80,6 @@
               $("#clients").append(template(data));
             }
           } else {
-            console.log("got new pi: " + data.pi);
             $("#n").text(data.n);
             var dotPi = $("#pi");
             dotPi.html("");

@@ -51,7 +51,10 @@ public class Server extends UntypedActor {
                 neueArbeit(na);
                 neueArbeit(na);
             }
+            benachrichtigen.tell("online", na);
             online(na);
+        } else if (nachricht instanceof Statistik) {
+            benachrichtigen.tell(nachricht, getSender());
         } else if (nachricht instanceof Summand) {
             neueArbeit(getSender());
 
@@ -99,14 +102,14 @@ public class Server extends UntypedActor {
 
     public Arbeit arbeitVon(Long von, ActorRef client) {
         // Die ersten x Pakete mit Paketgröße < 4, damit wir schnell eine gute Approximation kriegen.
-        long laenge = von < anzahlProPacket ? 4 : von;
+        long laenge = von < anzahlProPacket ? 1 : anzahlProPacket;
         vergabe.put(von, client);
         return new Arbeit(von, laenge, genauigkeit);
     }
 
     public void verteileArbeitAn(final Arbeit a, final ActorRef client) {
         final ActorRef self = getSelf();
-        context().system().scheduler().scheduleOnce(Duration.create(5000, TimeUnit.MILLISECONDS), new Runnable() {
+        context().system().scheduler().scheduleOnce(Duration.create(32000, TimeUnit.MILLISECONDS), new Runnable() {
             @Override
             public void run() {
                 self.tell(a.von, client);
@@ -121,13 +124,13 @@ public class Server extends UntypedActor {
     }
 
     public void online(ActorRef vermisst) {
-        benachrichtigen.tell("online", vermisst);
+        //benachrichtigen.tell("online", vermisst);
         clients.add(vermisst);
         offline.remove(vermisst);
     }
 
     public void offline(ActorRef vermisst) {
-        benachrichtigen.tell("offline", vermisst);
+        //benachrichtigen.tell("offline", vermisst);
         clients.remove(vermisst);
         offline.add(vermisst);
     }

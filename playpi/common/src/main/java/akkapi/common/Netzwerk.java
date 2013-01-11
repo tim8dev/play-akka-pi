@@ -21,7 +21,7 @@ public class Netzwerk {
     if(eigenerPort.trim() == "") {
         eigenerPort = "31331";
     }
-    String host = console.readLine("server IP:");
+    String host = console.readLine("server IP: ");
     String port = "31337";
     String addr = "akka://akkapi@" + host + ":" + port + "/user/server";
 
