@@ -1,0 +1,100 @@
+@(result: PiApprox)(implicit request: RequestHeader)
+
+<script src="@routes.Assets.at("javascripts/jquery-1.7.1.min.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/handlebars-1.0.rc.1.js")" type="text/javascript"></script>
+
+<a style="font-size: 14px; float: right;" href="/assets/client.zip">Client downloaden</a>
+
+          <h3>Live demo</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>U/D</th>
+                <th>Name</th>
+                <th>IP</th>
+                <th>Port</th>
+                <th>Geschwindigkeit</th>
+                <th>Summand</th>
+              </tr>
+            </thead>
+            <tbody id="clients">
+              <!--<tr>
+                <th class="green">Up!</th>
+                <td>Tim</td>
+                <td>127.0.0.1</td>
+                <td>31337</td>
+                <td>800000</td>
+                <td>2.781</td>
+              </tr>-->
+            </tbody>
+          </table>
+
+          <br>
+          <b>Aktuelle Approximation</b>
+          <div id="pi" style="font-family: monospace; font-size: 20px;">
+          </div>
+
+          <br>
+          <b>Anzahl Glieder</b>
+          <p id="n">@result.n</p>
+
+          <p class="grey" style="position: absolute; bottom: 42px;">
+            Brought to you by WebSockets
+          </p>
+
+  <script id="client-template" type="text/x-handlebars-template">
+    <tr id="c{{id}}">
+      <td>
+        {{#if online}}
+          <span class="green">Up!!</span>
+        {{else}}
+          <span class="red">Down!</span>
+        {{/if}}
+      </td>
+      <td>{{who}}</td>
+      <td>{{host}}</td>
+      <td>{{port}}</td>
+      <td>{{n}}</td>
+      <td>{{pi}}</td>
+    </tr>
+  </script>
+
+  <script type="text/javascript" charset="utf-8">
+     $(function() {
+	    var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
+	    var chatSocket = new WS("@routes.Application.result.webSocketURL()");
+
+        var clients = [];
+        var source   = $("#client-template").html();
+        var template = Handlebars.compile(source);
+
+	    var receiveEvent = function (event) {
+          console.log("got event: " + event.data);
+          var data = JSON.parse(event.data);
+          if(data.who) {
+            var i = clients.indexOf(data.who);
+            if(i >= 0) {
+              data.id = i;
+              $("#c" + i).replaceWith(template(data));
+            } else {
+              data.id = clients.length;
+              clients[data.id] = data.who;
+              $("#clients").append(template(data));
+            }
+          } else {
+            console.log("got new pi: " + data.pi);
+            $("#n").text(data.n);
+            var dotPi = $("#pi");
+            dotPi.html("");
+            var ps = data.pi.map(function (piPart) {
+              var p = $('<p></p>').text(piPart);
+              dotPi.append(p);
+            });
+          }
+	    };
+	    
+	    chatSocket.onmessage = receiveEvent;
+        console.log("Initialized chatSocket: " + chatSocket);
+	 });
+</script>
+
